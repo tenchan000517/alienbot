@@ -1,0 +1,30 @@
+{
+  "name": "alien-tap-game-server",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "main": "bot.mjs",
+  "scripts": {
+    "start": "node bot.mjs",
+    "dev": "nodemon bot.mjs"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "firebase": "^10.13.2",
+    "firebase-admin": "^12.5.0",
+    "node-telegram-bot-api": "^0.66.0",
+    "tonweb": "^0.0.66"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "keywords": ["telegram", "bot", "game", "alien", "tap"],
+  "author": "",
+  "license": "ISC",
+  "description": "Server for Alien Tap Game Telegram Bot"
+}
