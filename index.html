@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>エイリアンタップゲーム</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.5.1/pixi.min.js"></script>
+    <script>
+        const app = new PIXI.Application({
+            width: window.innerWidth,
+            height: window.innerHeight,
+            backgroundColor: 0x000000,
+            view: document.getElementById('gameCanvas')
+        });
+
+        // ゲーム状態
+        let gameState = {
+            score: 0,
+            aliens: [],
+            userId: null,
+            wallet: null
+        };
+
+        // URLパラメータの取得
+        const urlParams = new URLSearchParams(window.location.search);
+        gameState.userId = urlParams.get('userId');
+        gameState.wallet = urlParams.get('wallet');
+
+        // スコアテキスト
+        const scoreText = new PIXI.Text('Score: 0', {
+            fontFamily: 'Arial',
+            fontSize: 24,
+            fill: 0xffffff
+        });
+        scoreText.position.set(10, 10);
+        app.stage.addChild(scoreText);
+
+        // エイリアンの作成
+        function createAlien() {
+            const alien = PIXI.Sprite.from('https://pixijs.com/assets/bunny.png');
+            alien.anchor.set(0.5);
+            alien.x = Math.random() * app.screen.width;
+            alien.y = Math.random() * app.screen.height;
+            alien.interactive = true;
+            alien.buttonMode = true;
+            alien.on('pointerdown', onAlienClick);
+            app.stage.addChild(alien);
+            gameState.aliens.push(alien);
+        }
+
+        // エイリアンをクリックした時の処理
+        function onAlienClick() {
+            gameState.score += 1;
+            scoreText.text = `Score: ${gameState.score}`;
+            app.stage.removeChild(this);
+            gameState.aliens = gameState.aliens.filter(a => a !== this);
+            createAlien();
+        }
+
+        // ゲーム開始
+        function startGame() {
+            if (!gameState.wallet) {
+                showWalletLink();
+            } else {
+                for (let i = 0; i < 5; i++) {
+                    createAlien();
+                }
+            }
+        }
+
+        // ウォレットリンクの表示
+        function showWalletLink() {
+            fetch('http://localhost:3000/generate-wallet-link', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId: gameState.userId }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const linkContainer = new PIXI.Container();
+                const background = new PIXI.Graphics();
+                background.beginFill(0xFFFFFF);
+                background.drawRect(0, 0, 300, 400);
+                background.endFill();
+                linkContainer.addChild(background);
+
+                const qrTexture = PIXI.Texture.from(data.qrCode);
+                const qrSprite = new PIXI.Sprite(qrTexture);
+                qrSprite.width = 250;
+                qrSprite.height = 250;
+                qrSprite.position.set(25, 25);
+                linkContainer.addChild(qrSprite);
+
+                const linkText = new PIXI.Text('このQRコードをスキャンしてウォレットを連携してください', {
+                    fontFamily: 'Arial',
+                    fontSize: 16,
+                    fill: 0x000000,
+                    wordWrap: true,
+                    wordWrapWidth: 250
+                });
+                linkText.position.set(25, 300);
+                linkContainer.addChild(linkText);
+
+                linkContainer.position.set(
+                    (app.screen.width - linkContainer.width) / 2,
+                    (app.screen.height - linkContainer.height) / 2
+                );
+                app.stage.addChild(linkContainer);
+            });
+        }
+
+        // スコアの送信
+        function sendScore() {
+            fetch('http://localhost:3000/update-score', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userId: gameState.userId,
+                    wallet: gameState.wallet,
+                    score: gameState.score
+                }),
+            });
+        }
+
+        // ゲームオーバー処理
+        function gameOver() {
+            sendScore();
+            // ゲームオーバー画面の表示など
+        }
+
+        // ゲームループ
+        app.ticker.add((delta) => {
+            gameState.aliens.forEach(alien => {
+                alien.rotation += 0.1 * delta;
+            });
+        });
+
+        startGame();
+    </script>
+</body>
+</html>

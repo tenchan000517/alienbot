@@ -21,3 +21,7 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+.vercel
+
+server/aileantapgame-firebase-adminsdk-rsh7e-94f904c819.json
