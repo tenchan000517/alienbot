@@ -7,8 +7,12 @@ import admin from 'firebase-admin';
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: 'https://client-one-orcin.vercel.app',
+  credentials: true
+}));
 app.use(express.json());
+
 
 // Firebase初期化
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
@@ -23,7 +27,7 @@ const db = admin.database();
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
 
 // ゲームのURL（実際のフロントエンドのURLに更新してください）
-const GAME_URL = process.env.GAME_URL || 'https://client-26ykqzu9y-tenchan000517s-projects.vercel.app/';
+const GAME_URL = 'https://client-one-orcin.vercel.app';
 console.log('Game URL:', GAME_URL); // デバッグ用
 
 bot.onText(/\/start/, (msg) => {
