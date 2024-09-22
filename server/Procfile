@@ -1,1 +1,1 @@
-web: node bot.mjs
+web: npm start

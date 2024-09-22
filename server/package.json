@@ -6,7 +6,7 @@
   "main": "bot.mjs",
   "scripts": {
     "start": "node bot.mjs",
-    "dev": "nodemon bot.mjs"
+    "build": "echo 'No build step required'"
   },
   "dependencies": {
     "cors": "^2.8.5",

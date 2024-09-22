@@ -22,8 +22,9 @@ const db = admin.database();
 // Telegramボット初期化
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
 
-// ゲームのURL（デプロイ後に更新する必要があります）
-const GAME_URL = process.env.GAME_URL || 'https://your-game-url.com';
+// ゲームのURL（実際のフロントエンドのURLに更新してください）
+const GAME_URL = process.env.GAME_URL || 'https://client-26ykqzu9y-tenchan000517s-projects.vercel.app/';
+console.log('Game URL:', GAME_URL); // デバッグ用
 
 bot.onText(/\/start/, (msg) => {
   bot.sendMessage(msg.chat.id, 'Welcome to Alien Tap Game! Type /play to start a new game.');
@@ -35,10 +36,35 @@ bot.onText(/\/play/, (msg) => {
 
 bot.on('callback_query', (query) => {
   if (query.game_short_name === 'alien_tap') {
+    const gameUrl = `${GAME_URL}?userId=${query.from.id}`;
+    console.log('Answering callback query with URL:', gameUrl); // デバッグ用
     bot.answerCallbackQuery(query.id, {
-      url: `${GAME_URL}?userId=${query.from.id}`,
+      url: gameUrl,
+    }).catch(error => {
+      console.error('Error answering callback query:', error);
     });
   }
+});
+
+bot.on('inline_query', async (query) => {
+  const userId = query.from.id;
+  const userRef = db.ref(`users/${userId}`);
+  const userSnapshot = await userRef.once('value');
+  const userData = userSnapshot.val() || {};
+  const highScore = userData.highScore || 0;
+
+  const result = [{
+    type: 'article',
+    id: '1',
+    title: 'Share Your Alien Tap Game Score',
+    input_message_content: {
+      message_text: `My high score in Alien Tap Game is ${highScore}! Can you beat it? Play now: t.me/AlienTapBot?game=alien_tap`
+    },
+    description: `Your high score: ${highScore}`,
+    thumb_url: 'https://example.com/alien_tap_thumbnail.jpg' // 実際のサムネイル画像URLに更新してください
+  }];
+
+  bot.answerInlineQuery(query.id, result);
 });
 
 app.post('/update-score', async (req, res) => {
@@ -51,7 +77,6 @@ app.post('/update-score', async (req, res) => {
       timestamp: admin.database.ServerValue.TIMESTAMP
     });
 
-    // ハイスコアの更新
     const userRef = db.ref(`users/${userId}`);
     const userSnapshot = await userRef.once('value');
     const userData = userSnapshot.val() || {};
@@ -67,7 +92,6 @@ app.post('/update-score', async (req, res) => {
   }
 });
 
-// ルートパスのハンドラーを追加
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to Alien Tap Game Server!' });
 });
@@ -98,4 +122,8 @@ app.get('/leaderboard', async (req, res) => {
 const PORT = process.env.PORT || 3020;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
